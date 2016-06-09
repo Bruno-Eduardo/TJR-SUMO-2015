@@ -1,5 +1,10 @@
-// Código utilizado na competição de 2015
-// Data da última mofificação: 15/08
+/*******************************************************************
+ * TJR SUMO - GRUPO DE ESTUDOS EM ROBOTICA DA UNICAMP
+ * 
+ * Codigo do sumo tradicional utilizado na ultima competicao de 2015
+ * 
+ * Data da ultima modificacao: 06/06/2016
+ *******************************************************************/
 
 #include <Ultrasonic.h>
 
@@ -13,44 +18,52 @@
 #define MOTOR_D_F 4
 #define MOTOR_D_T 5
 
+/* distancia maxima de analise do sensor */
+#define SOM_MAX_DIST 60
+
+#define FRENTE HIGH
+#define TRAS LOW
+
 Ultrasonic sensorSomFrente(SOM_FRENTE_TRIG, SOM_FRENTE_ECHO);   
 Ultrasonic sensorSomDireita(SOM_DIREITA_TRIG, SOM_DIREITA_ECHO);  
 
-boolean somFrente, somDireito;
-
-void giraHorario() { 
-
+void controlamotor(int MOTOR_F, int MOTOR_T, boolean direcao)
+{
   /* Motor esquerdo pra frente*/ 
-  digitalWrite(MOTOR_E_F, HIGH);
-  digitalWrite(MOTOR_E_T, LOW);
+  digitalWrite(MOTOR_F, direcao);
+  digitalWrite(MOTOR_T, ! direcao);
+}
+
+void giraHorario() 
+{ 
+  /* M
+otor esquerdo pra frente*/
+  controlamotor(MOTOR_E_F, MOTOR_E_T, FRENTE);
 
   /* Motor direito pra tras */
-  digitalWrite(MOTOR_D_T, HIGH);  
-  digitalWrite(MOTOR_D_F, LOW);
+  controlamotor(MOTOR_D_F, MOTOR_D_T, TRAS);
   
 }
 
-void giraAntiHorario() {
+void giraAntiHorario() 
+{
 
-  /* Motor esquerdo pra tras */
-  digitalWrite(MOTOR_E_T, HIGH);
-  digitalWrite(MOTOR_E_F, LOW);
+  /* Motor esquerdo pra frente*/
+  controlamotor(MOTOR_E_F, MOTOR_E_T, TRAS);
 
-  /* Motor direito pra frente */
-  digitalWrite(MOTOR_D_F, HIGH); 
-  digitalWrite(MOTOR_D_T, LOW);  
+  /* Motor direito pra tras */
+  controlamotor(MOTOR_D_F, MOTOR_D_T, FRENTE);
 
 }
 
-void avanca() {
+void avanca() 
+{
 
  /* Motor esquerdo pra frente */
-  digitalWrite(MOTOR_E_F, HIGH);
-  digitalWrite(MOTOR_E_T, LOW);
+  controlamotor(MOTOR_E_F, MOTOR_E_T, FRENTE);
 
   /* Motor direito pra frente */
-  digitalWrite(MOTOR_D_F, HIGH);
-  digitalWrite(MOTOR_D_T, LOW);    
+  controlamotor(MOTOR_D_F, MOTOR_D_T, FRENTE);
   
   delay(200);
 }
@@ -58,52 +71,45 @@ void avanca() {
 void volta() {
 
    /* Motor esquerdo pra tras */
-  digitalWrite(MOTOR_E_F, LOW);
-  digitalWrite(MOTOR_E_T, HIGH);
+  controlamotor(MOTOR_E_F, MOTOR_E_T, TRAS);
 
   /* Motor direito tras */
-  digitalWrite(MOTOR_D_F, LOW);
-  digitalWrite(MOTOR_D_T, HIGH);  
+  controlamotor(MOTOR_D_F, MOTOR_D_T, TRAS);
 
 }
 
-boolean testaSomDireito() {
+boolean testaSomDireito() 
+{
 
-  boolean retorno = false;
-  int dist = sensorSomDireita.Ranging(CM);
-  /* Valor analogico do pino do sensor*/;
- 
-  if(dist <= 60) {
-    
+  /* Teste da leitura do valor analogico do pino do sensor */
+  if(sensorSomDireita.Ranging(CM) <= SOM_MAX_DIST) 
+  {
+    /* enquanto procura obstaculo a frente, gira */
     while(!testaSomFrente())
       giraHorario();    
-      
     delay(10);
-    
-    retorno = true;
- 
+    /* encontrando, retorna verdadeiro */
+    return true;
   }  
-
-  return retorno;
+  /* se nao, retorna falso */
+  return false;
 }
 
-boolean testaSomFrente() {
-
-  boolean retorno = false;
-  int dist = sensorSomFrente.Ranging(CM);
-  /* Valor analogico do pino do sensor*/;
-
-  if(dist <= 60) {
-    retorno = true;
+boolean testaSomFrente() 
+{
+  /* Teste da leitura do valor analogico do pino do sensor */
+  if(sensorSomFrente.Ranging(CM) <= SOM_MAX_DIST) 
+  {
+    /* se ha alguem na frente, retorna verdadeiro */
+    return true;
   }
-  return retorno;
+  /* se nao, retorna falso */
+  return false;
 }
 
 
-
-
-void setup() {
-  
+void setup() 
+{
   pinMode(MOTOR_D_F, OUTPUT);
   pinMode(MOTOR_D_T, OUTPUT);
   pinMode(MOTOR_E_F, OUTPUT);
@@ -113,21 +119,23 @@ void setup() {
   pinMode(SOM_FRENTE_TRIG, OUTPUT);
   pinMode(SOM_DIREITA_ECHO, INPUT);
   pinMode(SOM_DIREITA_TRIG, OUTPUT);
-  
 }
 
-void loop() {  
-  
-    somFrente = testaSomFrente();
-    
-    if(somFrente) {
+void loop() 
+{  
+    /* testa se o sensor frontal tem algo a frente */
+    if(testaSomFrente()) 
+    {
+      /* se sim, avanca nessa direcao */
       avanca();
       delay(10);
     }
-
-    else {
-     somDireito = testaSomDireito();
-     if(!somDireito)    
-       giraAntiHorario();
+    /* caso contrario, verifica o sensor do lado direito */
+    else 
+    {
+      /* se nao encontra ninguem a sua frente */
+      if(!testaSomDireito())  
+          /* gira */
+          giraAntiHorario();
     }
 }
